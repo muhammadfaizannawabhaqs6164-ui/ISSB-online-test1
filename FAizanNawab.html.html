@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>ISSB TEST PREPARATION</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+body{font-family:'Poppins',sans-serif;background:linear-gradient(135deg,#ff9a9e,#fecfef);margin:0;color:#333;overflow-x:hidden}
+.container{max-width:900px;margin:20px auto;background:#fff;padding:30px;border-radius:20px;box-shadow:0 10px 30px rgba(0,0,0,.2);animation:fadeIn .5s ease-in}
+@keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+h2{text-align:center;color:#2c3e50;margin-bottom:20px}
+.center{text-align:center}
+input{width:100%;padding:12px;margin-bottom:15px;font-size:16px;border:2px solid #ddd;border-radius:10px;transition:border-color .3s}
+input:focus{border-color:#3498db;outline:none}
+button{padding:12px 20px;border:none;border-radius:10px;font-size:16px;font-weight:bold;cursor:pointer;transition:all .3s;margin:5px}
+#startBtn{background:linear-gradient(45deg,#3498db,#2980b9);color:white;width:100%;animation:bounce 2s infinite}
+@keyframes bounce{0%,20%,50%,80%,100%{transform:translateY(0)}40%{transform:translateY(-10px)}60%{transform:translateY(-5px)}}
+#timer{background:linear-gradient(45deg,#e74c3c,#c0392b);color:white;padding:15px;text-align:center;border-radius:10px;font-weight:bold;position:relative}
+#timerBar{width:100%;height:5px;background:#ddd;border-radius:5px;margin-top:10px}
+#timerBarFill{height:100%;background:#27ae60;border-radius:5px;transition:width 1s linear}
+.warning{color:#e74c3c;font-weight:bold;text-align:center;margin:15px 0;font-size:18px;animation:blink 1s infinite}
+@keyframes blink{0%,50%{opacity:1}51%,100%{opacity:0}}
+.option{border:2px solid #ecf0f1;padding:15px;border-radius:10px;margin-bottom:12px;cursor:pointer;transition:all .3s;background:#f9f9f9}
+.option:hover{border-color:#3498db;background:#ecf0f1;transform:scale(1.02)}
+.option.selected{border-color:#3498db;background:#d4edda}
+.option.correct{background:#3498db;color:white;border-color:#3498db}
+.option.wrong{background:#e74c3c;color:white;border-color:#e74c3c;border:3px solid red}
+.buttons{display:flex;justify-content:space-between;margin-top:25px;flex-wrap:wrap}
+#prevBtn{background:#7f8c8d;color:white}
+#skipBtn{background:#f39c12;color:white}
+#nextBtn{background:#2980b9;color:white}
+#submitBtn{background:#27ae60;color:white;width:100%;margin-top:20px;display:none}
+.progress{margin-bottom:20px}
+.progress-bar{width:100%;height:10px;background:#ddd;border-radius:5px}
+.progress-fill{height:100%;background:linear-gradient(45deg,#3498db,#2980b9);border-radius:5px;transition:width .5s}
+.footer{text-align:center;font-size:14px;margin-top:30px;color:#777}
+.dark-mode{background:#2c3e50;color:#ecf0f1}
+.dark-mode .container{background:#34495e}
+.review-question{border-bottom:1px solid #ddd;padding:15px 0}
+.review-option.correct{background:#3498db;color:white;border:2px solid #3498db;padding:8px;margin:3px;border-radius:8px}
+.review-option.wrong{background:#e74c3c;color:white;border:2px solid #e74c3c;padding:8px;margin:3px;border-radius:8px}
+.review-explanation{font-size:14px;color:#555;margin-top:8px}
+@media (max-width:600px){.buttons{flex-direction:column}button{width:100%}}
+</style>
+</head>
+<body>
+<!-- LOGIN -->
+<div class="container center" id="loginDiv">
+<h2><i class="fas fa-graduation-cap"></i> ISSB PREPARATIN TEST</h2>
+<input id="studentName" placeholder="Student Name">
+<input id="rollNo" placeholder="Roll Number">
+<button id="startBtn" onclick="startCountdown()">Start Test</button>
+<div id="countdown" style="font-size:30px;color:#e74c3c;margin-top:15px"></div>
+<label><input type="checkbox" id="randomize"> Randomize Questions</label>
+<label><input type="checkbox" id="darkMode" onchange="toggleDarkMode()"> Dark Mode</label>
+</div>
+
+<!-- QUIZ -->
+<div class="container" id="quizDiv" style="display:none">
+<h2 class="center"><i class="fas fa-question-circle"></i> ISSB PREPARATION TEST</h2>
+<div id="timer">Time Left: 40:00</div>
+<div id="timerBar"><div id="timerBarFill"></div></div>
+<div class="warning" id="warn20" style="display:none"><i class="fas fa-exclamation-triangle"></i> Only 20 minutes remaining!</div>
+<div id="attemptInfo" class="center"></div>
+<div class="progress">
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+</div>
+<div id="questionBox"></div>
+<div id="optionsBox"></div>
+<div class="buttons">
+<button id="prevBtn" onclick="prevQ()">Previous</button>
+<button id="skipBtn" onclick="skipQ()">Skip</button>
+<button id="nextBtn" onclick="nextQ()" disabled>Next</button>
+</div>
+<button id="submitBtn" onclick="confirmSubmit()">Submit Test</button>
+</div>
+
+<!-- RESULT -->
+<div class="container center" id="resultDiv" style="display:none">
+<h2 id="resStatus"></h2>
+<p id="resScore"></p>
+<p id="resTime"></p>
+<button onclick="showReview()" style="background:#2980b9;color:white;width:100%">Review Test</button>
+<button onclick="location.reload()">Restart</button>
+</div>
+
+<!-- REVIEW -->
+<div class="container" id="reviewDiv" style="display:none">
+<h2 class="center">Review Your Test</h2>
+<div id="reviewContent"></div>
+<button onclick="backToResult()" style="width:100%;background:#7f8c8d;color:white">Back to Result</button>
+</div>
+
+<div class="footer">Created by <b>Muhammad Faizan Nawab</b></div>
+
+<script>
+// ==========================
+// 100 MCQs (example 4 added; expand as needed)
+// ==========================
+const questions = [
+
+{ q: "First Ghazwa was Widan (Abwa) in:", o: ["1 AH","2 AH","3 AH","4 AH"], c: 1 },
+{ q: "Battle of Badr was fought in:", o: ["1 Hijri","2 Hijri","3 Hijri","4 Hijri"], c: 1 },
+{ q: "Battle of Uhud was fought in:", o: ["2 Hijri","3 Hijri","4 Hijri","5 Hijri"], c: 1 },
+{ q: "Battle of Khandaq (Ahzab) was fought in:", o: ["3 Hijri","4 Hijri","5 Hijri","6 Hijri"], c: 2 },
+{ q: "Battle of Bani Mustaliq was fought in:", o: ["3 Hijri","4 Hijri","5 Hijri","6 Hijri"], c: 2 },
+
+{ q: "Conquest of Khyber was fought in:", o: ["6 Hijri","7 Hijri","8 Hijri","9 Hijri"], c: 1 },
+{ q: "Conquest of Makkah occurred in:", o: ["6 Hijri","7 Hijri","8 Hijri","9 Hijri"], c: 2 },
+{ q: "Battle of Tabuk was fought in:", o: ["7 Hijri","8 Hijri","9 Hijri","10 Hijri"], c: 2 },
+{ q: "Hijrat-e-Madina took place in:", o: ["8 Hijri","9 Hijri","10 Hijri","1 Hijri"], c: 3 },
+{ q: "Tragedy of Karbala occurred on:", o: ["8 Hijri","9 Hijri","10 Hijri","11 Hijri"], c: 2 },
+
+{ q: "Battle of Badr was fought on:", o: ["10 Ramzan","15 Ramzan","17 Ramzan","20 Ramzan"], c: 2 },
+{ q: "Battle of Uhud was fought on:", o: ["5 Shawwal","7 Shawwal","10 Shawwal","15 Shawwal"], c: 0 },
+{ q: "Karbala took place on 10th Muharram in:", o: ["61 AH","62 AH","63 AH","64 AH"], c: 0 },
+{ q: "Battle of Yarmuk was fought in:", o: ["13 AH","14 AH","15 AH","16 AH"], c: 0 },
+{ q: "Battle of Hunain was fought in:", o: ["7 Hijri","8 Hijri","9 Hijri","10 Hijri"], c: 1 },
+
+{ q: "Siege of Taif took place in:", o: ["7 AH","8 AH","9 AH","10 AH"], c: 1 },
+{ q: "Famine occurred in Hijaz in:", o: ["7 Hijri","8 Hijri","9 Hijri","10 Hijri"], c: 2 },
+{ q: "Ghazwa-e-Tabuk was fought in:", o: ["7 Hijri","8 Hijri","9 Hijri","10 Hijri"], c: 2 },
+{ q: "Battle of Mu’ta took place in:", o: ["7 Hijri","8 Hijri","9 Hijri","10 Hijri"], c: 1 },
+{ q: "Hazrat Khalid bin Walid (RA) accepted Islam in:", o: ["6 Hijri","7 Hijri","8 Hijri","9 Hijri"], c: 1 },
+
+{ q: "Jihad was made obligatory in:", o: ["1 Hijri","2 Hijri","3 Hijri","4 Hijri"], c: 1 },
+{ q: "Ghazwa-e-Badr is also known as:", o: ["Furqan","Ahzab","Hunain","Khyber"], c: 0 },
+{ q: "Battle of Khandaq is also called:", o: ["Badr","Uhud","Ahzab","Hunain"], c: 2 },
+{ q: "Total number of soldiers in Badr were:", o: ["1000","900","700","313"], c: 3 },
+{ q: "Among 313 Muslims in Badr, Muhajir were:", o: ["82","231","100","150"], c: 0 },
+
+{ q: "Martyrs in Badr were:", o: ["10","12","14","16"], c: 1 },
+{ q: "Colour of Islamic flag in Badr was white and held by:", o: ["Hazrat Ali","Hazrat Hamza","Hazrat Musab bin Umair","Hazrat Umar"], c: 2 },
+{ q: "Commander of Quraish in Badr was:", o: ["Abu Jahl","Abu Sufyan","Utbah","Walid"], c: 0 },
+{ q: "First person killed from Quraish side in Badr was:", o: ["Abu Jahl","Umair bin Abi Waqqas","Aas bin Saeed","Aas bin Abdullah"], c: 2 },
+{ q: "Battle of Badr was fought for:", o: ["1 day","2 days","3 days","4 days"], c: 0 },
+
+{ q: "Kuffars killed in Badr were:", o: ["50","60","70","80"], c: 2 },
+{ q: "Battle of Khyber occurred in:", o: ["Muharram","Safar","Rabi-ul-Awwal","Rajab"], c: 3 },
+{ q: "Muslim strength in Khyber was:", o: ["1200","1300","1400","1500"], c: 1 },
+{ q: "Total forts in Khyber were:", o: ["6","7","8","9"], c: 1 },
+{ q: "Hazrat Ali (RA) is known as:", o: ["Asadullah","Saifullah","Fateh-e-Khyber","Zun-Noorain"], c: 0 },
+
+{ q: "Muslim strength in Hudabiya was:", o: ["1200","1300","1400","1500"], c: 2 },
+{ q: "Hudabiya agreement was written by:", o: ["Hazrat Umar","Hazrat Ali","Hazrat Abu Bakr","Hazrat Zaid"], c: 1 },
+{ q: "The camel of Holy Prophet (PBUH) was named:", o: ["Buraq","Qaswa","Dul-Dul","Sakina"], c: 1 },
+
+{ q: "Battle of Dumat-ul-Jandal took place in:", o: ["4 AH","5 AH","6 AH","7 AH"], c: 2 },
+{ q: "First victory of Muslims against Jews occurred in:", o: ["Badr","Uhud","Bani Qainuqa","Khyber"], c: 2 },
+{ q: "Bani Qainuqa were expelled from Madina in:", o: ["1 AH","2 AH","3 AH","4 AH"], c: 1 },
+{ q: "Abu Bakr (RA) participated in Badr and Uhud as:", o: ["General","Soldier","Advisor","Standard-bearer"], c: 1 },
+{ q: "Battle of Bani Quraiza was settled by:", o: ["Hazrat Ali","Hazrat Umar","Hazrat Saad bin Muaz","Hazrat Abu Bakr"], c: 2 },
+
+{ q: "It was fought in 5 Hijri:", o: ["Uhud","Badr","Khandaq","Hunain"], c: 2 },
+{ q: "Muslims were 3000 and enemies were 2000 in:", o: ["Uhud","Hunain","Tabuk","Mu’ta"], c: 0 },
+{ q: "First commander martyred in Battle of Mu’ta was:", o: ["Hazrat Ali","Hazrat Hamza","Hazrat Zaid bin Haris","Hazrat Khalid bin Walid"], c: 2 },
+{ q: "Second commander martyred in Battle of Mu’ta was:", o: ["Hazrat Zaid bin Haris","Hazrat Ja’far bin Abi Talib","Hazrat Abdullah bin Rawaha","Hazrat Khalid bin Walid"], c: 1 },
+{ q: "Third commander martyred in Battle of Mu’ta was:", o: ["Hazrat Ali","Hazrat Hamza","Hazrat Abdullah bin Rawaha","Hazrat Khalid bin Walid"], c: 2 },
+
+{ q: "Number of Quraish soldiers in Uhud were:", o: ["2000","2500","3000","4000"], c: 2 },
+
+
+{ q: " Number of soldiers in Uhud were Muslims 700 and Quraish:", o: ["2000","2500","3000","4000"], c: 2 },
+{ q: " In Uhud, number of archers appointed was:", o: ["40","50","60","70"], c: 1 },
+{ q: " Pass of Uhud was guarded by:", o: ["Hazrat Ali","Hazrat Umar","Hazrat Abdullah bin Jubair","Hazrat Hamza"], c: 2 },
+{ q: " Battle of Uhud took place in:", o: ["Shawwal","Ramzan","Muharram","Safar"], c: 0 },
+{ q: " Hazrat Hamza (RA) was martyred by:", o: ["Abu Sufyan","Hind","Wahshi","Ikrama"], c: 2 },
+{ q: " Abu Jahl was killed by:", o: ["Hazrat Ali","Hazrat Hamza","Two Ansar youths","Hazrat Umar"], c: 2 },
+{ q: " Hazrat Salman Farsi (RA) suggested digging of trench in:", o: ["Badr","Uhud","Khandaq","Khyber"], c: 2 },
+{ q: " 3000 was the number of Muslims in the battle of:", o: ["Badr","Uhud","Tabuk","Hunain"], c: 2 },
+{ q: " Kuffar strength was 10000 in:", o: ["Uhud","Badr","Khandaq","Hunain"], c: 2 },
+{ q: " Muslims entered Makkah on:", o: ["8th Ramzan","10th Ramzan","15th Ramzan","20th Ramzan"], c: 0 },
+
+{ q: " 10th Hijri is known as the year of:", o: ["Migration","Conquest","Delegations","Farewell Hajj"], c: 3 },
+{ q: " Last companion accepted Islam was:", o: ["Abu Sufyan","Ikrama","Wahshi","Suhail bin Amr"], c: 2 },
+{ q: " Total number of Ghazwat are:", o: ["25","26","27","28"], c: 2 },
+{ q: " Hazrat Hamza (RA) was the maternal uncle of:", o: ["Hazrat Ali","Holy Prophet (PBUH)","Hazrat Umar","Hazrat Abbas"], c: 1 },
+{ q: " Under Hazrat Usama bin Zaid, expedition was sent to:", o: ["Syria","Yemen","Iraq","Egypt"], c: 0 },
+{ q: " Battle of Mu’ta was the first against:", o: ["Jews","Persians","Romans","Ethiopians"], c: 2 },
+{ q: " Last battle was Ghazwa-e-Tabuk in:", o: ["8 AH","9 AH","10 AH","11 AH"], c: 1 },
+{ q: " For 20 days Prophet (PBUH) stayed at:", o: ["Madina","Makkah","Tabuk","Taif"], c: 2 },
+{ q: " The person killed by Holy Prophet (PBUH) was:", o: ["Abu Jahl","Ubay bin Khalaf","Utbah","Walid"], c: 1 },
+{ q: " Najashi was the king of:", o: ["Persia","Rome","Abyssinia","Yemen"], c: 2 },
+
+{ q: " Surname of Najashi was:", o: ["Asma bin Abjar","Abraha","Heraclius","Kisra"], c: 0 },
+{ q: " Salahuddin Ayyubi was of origin:", o: ["Arab","Turkish","Kurdish","Persian"], c: 2 },
+{ q: " Hazrat Bilal came to Madina after:", o: ["Migration","Badr","Uhud","Khyber"], c: 0 },
+{ q: " Ibn Khaldun is called founder of:", o: ["Economics","Sociology","History","Philosophy"], c: 1 },
+{ q: " In Prophet (PBUH) time, ruler of Rome was:", o: ["Kisra","Najashi","Heraclius","Muqauqis"], c: 2 },
+{ q: " In Prophet (PBUH) time, ruler of Egypt was:", o: ["Kisra","Najashi","Heraclius","Muqauqis"], c: 3 },
+{ q: " There are four Holy Books:", o: ["Torah, Zaboor, Injeel, Quran","Quran, Hadith, Fiqh, Sunnah","Torah, Quran, Psalms, Bible","Zaboor, Hadith, Quran, Injeel"], c: 0 },
+{ q: " What is the most important subject of the Holy Books?", o: ["Fiqh","History","Human Beings","Worship"], c: 3 },
+{ q: " Zaboor was revealed on:", o: ["Hazrat Musa (AS)","Hazrat Isa (AS)","Hazrat Dawood (AS)","Hazrat Ibrahim (AS)"], c: 2 },
+{ q: " Taurat was revealed on:", o: ["Hazrat Isa (AS)","Hazrat Musa (AS)","Hazrat Dawood (AS)","Hazrat Nuh (AS)"], c: 1 },
+
+{ q: " Injeel was revealed on:", o: ["Hazrat Musa (AS)","Hazrat Isa (AS)","Hazrat Dawood (AS)","Hazrat Ibrahim (AS)"], c: 1 },
+{ q: " Hazrat Muhammad (PBUH) was called by the name of Ahmed in:", o: ["Taurat","Zaboor","Injeel","Quran"], c: 2 },
+{ q: " Quran was revealed on Hazrat Muhammad (PBUH) in:", o: ["20 years","21 years","22 years","23 years"], c: 3 },
+{ q: " Hazrat Muhammad (PBUH) was called by the name of Farooq in Zaboor.", o: ["True","False","Partly true","Not mentioned"], c: 1 },
+{ q: " Taurat was the first book delivered to:", o: ["Hazrat Dawood (AS)","Hazrat Musa (AS)","Hazrat Isa (AS)","Hazrat Ibrahim (AS)"], c: 1 },
+{ q: " Hazrat Usman is Jame-e-Quran because:", o: ["He memorized Quran","He revealed Quran","He compiled Quran","He translated Quran"], c: 2 },
+{ q: " Another name of Quran is:", o: ["Zaboor","Furqan","Injeel","Taurat"], c: 1 },
+{ q: " Quran was revealed in:", o: ["20 years","21 years","22 years","23 years"], c: 3 },
+{ q: " Al-Baqarah is the largest Surah of Quran.", o: ["True","False","Not sure","Not mentioned"], c: 0 },
+{ q: " Surah Kausar is the shortest Surah of Quran.", o: ["True","False","Not sure","Not mentioned"], c: 0 },
+
+{ q: " Surah Yaseen is called the heart of Quran.", o: ["True","False","Not sure","Not mentioned"], c: 0 },
+{ q: " Total Surahs in the Holy Quran are:", o: ["112","113","114","115"], c: 2 },
+{ q: " Total Paras (Ajza) of Holy Quran are:", o: ["28","29","30","31"], c: 2 },
+{ q: " The first translation of Quran was performed by:", o: ["Hazrat Ali (RA)","Hazrat Salman Farsi (RA)","Hazrat Umar (RA)","Hazrat Abu Bakr (RA)"], c: 1 },
+{ q: " The first Urdu translation of Quran was done by:", o: ["Shah Waliullah","Shah Abdul Qadir","Sir Syed Ahmed Khan","Maulana Rumi"], c: 1 },
+{ q: " Prophet (PBUH) first received revelation in:", o: ["1 AH","2 AH","5 EC","610 AD"], c: 3 },
+{ q: " Lailatul Qadr is the night of power because:", o: ["Angels descend","Quran was revealed","Worship is rewarded more","All of these"], c: 3 },
+{ q: " Each human being is attended permanently by two angels.", o: ["True","False","Sometimes","Not mentioned"], c: 0 },
+{ q: " Hazrat Jibrael is referred in Quran as:", o: ["Rooh-ul-Qudus","Malik-ul-Maut","Israfeel","Mikail"], c: 0 },
+{ q: " Hazrat Mikail is in charge of:", o: ["Death","Revelation","Rain and sustenance","Resurrection"], c: 2 },
+{ q: " Hazrat Israfeel is called as:", o: ["Malik-ul-Maut","Angel of death","Angel who will blow Soor","Angel of rain"], c:3 },
+
+
+{ q: "101. Duty of Hazrat Jibrael is to:", o: ["Bring rain","Convey Allah’s message to Prophets","Take souls","Blow Soor"], c: 1 },
+{ q: "102. Hazrat Israfeel will blow:", o: ["Trumpet","Drum","Bell","Horn"], c: 0 },
+
+{ q: "103. Kalma Tayyaba is the Kalma number:", o: ["1st","2nd","3rd","4th"], c: 0 },
+{ q: "104. Kalma Shahadat is the Kalma number:", o: ["1st","2nd","3rd","4th"], c: 1 },
+{ q: "105. Kalma Tamjeed is the Kalma number:", o: ["2nd","3rd","4th","5th"], c: 2 },
+{ q: "106. Kalma Tauheed is the Kalma number:", o: ["1st","2nd","3rd","4th"], c: 2 },
+{ q: "107. Kalma Astaghfar is the Kalma number:", o: ["3rd","4th","5th","6th"], c: 2 },
+{ q: "108. Kalma Rad-e-Kufr is the Kalma number:", o: ["4th","5th","6th","2nd"], c: 2 },
+
+{ q: "109. Total Rakats in Fard prayers are:", o: ["15","16","17","18"], c: 2 },
+{ q: "110. Namaz-e-Kasoof is offered for:", o: ["Rain","Earthquake","Solar eclipse","Lunar eclipse"], c: 2 },
+{ q: "111. Namaz-e-Istasqa is offered for:", o: ["Rain","Storm","Flood","Earthquake"], c: 0 },
+{ q: "112. Eid Namaz is:", o: ["Farz","Wajib","Sunnah","Nafl"], c: 1 },
+{ q: "113. Namaz-e-Tarawih is:", o: ["Farz","Wajib","Sunnah","Nafl"], c: 2 },
+{ q: "114. Tahajjud means:", o: ["Early sleep","Midnight prayer","Abandon sleep","Short sleep"], c: 2 },
+{ q: "115. Qada is to sit straight in prayer.", o: ["Sajda","Qiyam","Qada","Ruku"], c: 2 },
+{ q: "116. Qaumaa is standing straight during Ruku.", o: ["Qiyam","Qauma","Sajda","Qada"], c: 1 },
+{ q: "117. Farz in Wuzu are:", o: ["2","3","4","5"], c: 2 },
+{ q: "118. The number of Sunnats in Wuzu is:", o: ["10","12","14","16"], c: 2 },
+{ q: "119. Farz and Sunnats in Ghusal are:", o: ["2 Farz & 3 Sunnats","3 Farz & 5 Sunnats","4 Farz & 6 Sunnats","5 Farz & 3 Sunnats"], c: 1 },
+{ q: "120. Five daily prayers were made compulsory in:", o: ["5th Nabvi","7th Nabvi","9th Nabvi","10th Nabvi"], c: 3 },
+{ q: "121. Shortening of prayer during journey is called:", o: ["Qaza","Qasar","Jama","Qiyam"], c: 1 },
+{ q: "122. Namaz with congregation is better than individual Namaz by:", o: ["17 times","20 times","25 times","27 times"], c: 3 },
+{ q: "123. The first Namaz-e-Janazah offered by the Prophet (PBUH) was of:", o: ["Hazrat Hamza","Asad Bin Zarara","Abu Talib","Abdullah Bin Ubay"], c: 1 },
+{ q: "124. The number of Takbeers in Namaz-e-Janazah is:", o: ["2","3","4","5"], c: 2 },
+
+{ q: "125. Zakat literally means:", o: ["To give charity","To purify","To spend","To save"], c: 1 },
+{ q: "126. Zakat was made obligatory in:", o: ["1 AH","2 AH","3 AH","4 AH"], c: 1 },
+{ q: "127. The Nisab of gold is:", o: ["5½ tola","6½ tola","7 tola","7½ tola"], c: 2 },
+{ q: "128. The Nisab of silver is:", o: ["40 tola","45 tola","50 tola","52½ tola"], c: 3 },
+{ q: "129. The injunction of utilization of Zakat is mentioned in:", o: ["Surah Al-Baqarah","Surah Al-Maidah","Surah Al-Tauba","Surah Al-Nisa"], c: 2 },
+
+{ q: "130. The literal meaning of fast is:", o: ["To eat less","To pray","To stop","To give charity"], c: 2 },
+{ q: "131. Fasting was made obligatory in:", o: ["1 AH","2 AH","3 AH","4 AH"], c: 1 },
+{ q: "132. Fasting is commanded in Surah:", o: ["Al-Tauba","Al-Nisa","Al-Imran","Al-Baqarah"], c: 3 },
+{ q: "133. Bab-ul-Riyan is the door for:", o: ["Martyrs","Scholars","Those who offer prayer","Those who observe fast"], c: 3 },
+{ q: "134. The month of Ramazan is known as:", o: ["Syed-ul-Ramazan","Sayyed-us-Shaban","Shahr-e-Sabr","Ashra-e-Rehmat"], c: 1 },
+{ q: "135. The first Ashra of Ramazan is called:", o: ["Ashra-e-Nijat","Ashra-e-Maghfirat","Ashra-e-Rehmat","Ashra-e-Sabr"], c: 2 },
+{ q: "136. The second Ashra of Ramazan is called:", o: ["Ashra-e-Rehmat","Ashra-e-Nijat","Ashra-e-Maghfirat","Ashra-e-Falah"], c: 2 },
+{ q: "137. The third Ashra of Ramazan is called:", o: ["Ashra-e-Rehmat","Ashra-e-Maghfirat","Ashra-e-Nijat","Ashra-e-Sabr"], c: 2 },
+
+{ q: "138. The literal meaning of Hajj is:", o: ["To worship","To sacrifice","To intend","To travel"], c: 2 },
+{ q: "139. Hajj was made compulsory and first offered in:", o: ["8 A.H","9 A.H","10 A.H","11 A.H"], c: 1 },
+{ q: "140. The Holy Prophet (PBUH) performed Hajj in:", o: ["8 A.H","9 A.H","10 A.H","11 A.H"], c: 2 },
+{ q: "141. The number of types of Hajj is:", o: ["2","3","4","5"], c: 1 },
+{ q: "142. The Kaaba was first constructed by:", o: ["Hazrat Ibrahim (A.S)","Hazrat Ismail (A.S)","Hazrat Adam (A.S)","Hazrat Nuh (A.S)"], c: 2 },
+{ q: "143. The Kaaba was rebuilt by Hazrat Ibrahim (A.S) and Hazrat Ismail (A.S):", o: ["3000 years ago","3500 years ago","4000 years ago","4500 years ago"], c: 3 },
+{ q: "144. Youm-e-Nahar is known as the day of:", o: ["Hajj","Arafat","Sacrifice","Tawaf"], c: 2 },
+{ q: "145. Youm-e-Arafat falls on:", o: ["8 Zul Hajj","9 Zul Hajj","10 Zul Hajj","11 Zul Hajj"], c: 1 },
+{ q: "146. The command of Hajj is found in Surah:", o: ["Al-Baqarah","Al-Tauba","Al-Nisa","Al-Imran"], c: 3 },
+{ q: "147. Running between Safa and Marwa seven times is called:", o: ["Tawaf","Sayee","Rami","Ihram"], c: 1 },
+{ q: "148. The number of Farz (obligations) in Hajj is:", o: ["2","3","4","5"], c: 1 },
+{ q: "149. Hajar-e-Aswad means:", o: ["White stone","Sacred stone","Black stone","Heavy stone"], c: 2 },
+{ q: "150. Sayee starts from Safa and ends at:", o: ["Mina","Arafat","Muzdalifah","Marwa"], c: 3 },
+{ q: "151. The total number of Surahs in the Holy Quran is:", o: ["112","113","114","115"], c: 2 },
+{ q: "152. The number of Makki Surahs is:", o: ["84","85","86","88"], c: 2 },
+{ q: "153. The number of Madani Surahs is:", o: ["26","27","28","29"], c: 2 },
+{ q: "154. The Holy Quran is divided into how many stages (Manazil)?", o: ["5","6","7","8"], c: 2 },
+{ q: "155. The total number of Rukus in the Holy Quran is:", o: ["540","552","558","560"], c: 2 },
+{ q: "156. The total number of Ayats in the Holy Quran is:", o: ["6000","6236","6666","7000"], c: 2 },
+{ q: "157. The word “Tayyaba” is mentioned in the Holy Quran:", o: ["Once","Twice","Three times","Four times"], c: 1 },
+{ q: "158. The longest Surah of the Holy Quran is:", o: ["Al-Imran","Al-Nisa","Al-Maida","Al-Baqarah"], c: 3 },
+{ q: "159. The shortest Surah of the Holy Quran is:", o: ["Al-Asr","Al-Kausar","Al-Ikhlas","Al-Falaq"], c: 1 },
+{ q: "160. The last Surah of the Holy Quran is:", o: ["Al-Falaq","Al-Ikhlas","Al-Nas","Al-Kausar"], c: 2 },
+{ q: "161. The preface of the Holy Quran is:", o: ["Surah Al-Baqarah","Surah Al-Nas","Surah Al-Fatiha","Surah Al-Ikhlas"], c: 2 },
+{ q: "162. The number of verses revealed in the first Wahi was:", o: ["3","4","5","6"], c: 2 },
+{ q: "163. Namaz is commanded in the Holy Quran approximately:", o: ["500 times","600 times","700 times","800 times"], c: 2 },
+{ q: "164. Which Surah does not begin with Bismillah?", o: ["Al-Anfal","Al-Tauba","Al-Maida","Al-Nisa"], c: 1 },
+{ q: "165. Which Surah is known as the heart of the Holy Quran?", o: ["Al-Rahman","Al-Baqarah","Ya-Sin","Al-Fatiha"], c: 2 },
+{ q: "166. The Holy Prophet (PBUH) is addressed as “Ahmed” in Surah:", o: ["Al-Ahzab","Al-Saff","Al-Jumuah","Al-Fath"], c: 1 },
+{ q: "167. Surah Rehman is also called:", o: ["Noor-ul-Quran","Qalb-ul-Quran","Aroos-ul-Quran","Umm-ul-Quran"], c: 2 },
+{ q: "168. The best month mentioned in the Holy Quran is:", o: ["Muharram","Rajab","Shaban","Ramazan"], c: 3 },
+{ q: "169. The Holy Quran was revealed in a period of:", o: ["20 years","21 years","22 years 5 months 14 days","23 years"], c: 2 },
+{ q: "170. Surah Al-Fatiha is also called:", o: ["Aroos-ul-Quran","Qalb-ul-Quran","Umm-ul-Kitab","Noor-ul-Quran"], c: 2 },
+
+{ q: "171. The literal meaning of Islam is:", o: ["Faith","Obedience","Peace","Worship"], c: 2 },
+{ q: "172. The literal meaning of Ansar is:", o: ["Helpers","Soldier","Friends","Believers"], c: 1 },
+{ q: "173. The literal meaning of Rasool is:", o: ["Prophet","Leader","Guide","Sent to"], c: 3 },
+{ q: "174. The literal meaning of Monotheism is:", o: ["Belief","Religion","Worship","Oneness"], c: 3 },
+{ q: "175. The literal meaning of Akhowat is:", o: ["Brotherhood","Faith","Union","Society"], c: 2 },
+{ q: "176. The literal meaning of Nabi is:", o: ["Messenger","Leader","Scholar","Guide"], c: 0 },
+{ q: "177. The literal meaning of Rab is:", o: ["Master","Creator, Sustainer","King","Provider only"], c: 1 },
+{ q: "178. The literal meaning of Zakat is:", o: ["Charity","To grow","To purity","To spend"], c: 2 },
+{ q: "179. The literal meaning of Muhammad is:", o: ["Honest","Truthful","To praise","Leader"], c: 2 },
+{ q: "180. The literal meaning of Hadith is:", o: ["Sunnah","Saying of Prophet","History","Book"], c: 1 },
+{ q: "181. The literal meaning of Destruction is:", o: ["To fight","To sacrifice","To struggle","To destroy"], c: 2 },
+{ q: "182. The literal meaning of Muslim is:", o: ["Believer","Worshipper","Follower","To submit"], c: 3 },
+{ q: "183. The literal meaning of Hajj is:", o: ["To travel","To worship","To sacrifice","To intend"], c: 3 },
+
+{ q: "184. The first martyr in Islam was:", o: ["Hazrat Hamza (R.A)","Hazrat Yasir (R.A)","Hazrat Harith Bin Halla (R.A)","Hazrat Sumayya (R.A)"], c: 2 },
+{ q: "185. The first woman martyr in Islam was:", o: ["Hazrat Khadija (R.A)","Hazrat Ayesha (R.A)","Hazrat Fatima (R.A)","Hazrat Sumayya bint Khayyat (R.A)"], c: 3 },
+
+{ q: "186. The first woman to accept Islam was:", o: ["Hazrat Ayesha (R.A)","Hazrat Hafsa (R.A)","Hazrat Khadija (R.A)","Hazrat Fatima (R.A)"], c: 2 },
+{ q: "187. The first male to accept Islam was:", o: ["Hazrat Abu Bakr (R.A)","Hazrat Umar (R.A)","Hazrat Zaid bin Haris (R.A)","Hazrat Ali (R.A)"], c: 3 },
+{ q: "188. The first slave to accept Islam was:", o: ["Hazrat Salman Farsi (R.A)","Hazrat Bilal Habshi (R.A)","Hazrat Zaid bin Haris (R.A)","Hazrat Ammar bin Yasir (R.A)"], c: 1 },
+{ q: "189. The first non-Arab to embrace Islam was:", o: ["Hazrat Salman Farsi (R.A)","Hazrat Suhaib Rumi (R.A)","Farwah Bin Umra (R.A)","Hazrat Bilal Habshi (R.A)"], c: 2 },
+
+{ q: "190. The title “Safiullah” was given to:", o: ["Hazrat Nuh (A.S)","Hazrat Adam (A.S)","Hazrat Ibrahim (A.S)","Hazrat Musa (A.S)"], c: 1 },
+{ q: "191. The title “Kaleemullah” belongs to:", o: ["Hazrat Musa (A.S)","Hazrat Isa (A.S)","Hazrat Adam (A.S)","Hazrat Nuh (A.S)"], c: 1 },
+{ q: "192. The title “Khalilullah” was given to:", o: ["Hazrat Nuh (A.S)","Hazrat Musa (A.S)","Hazrat Ibrahim (A.S)","Hazrat Isa (A.S)"], c: 2 },
+{ q: "193. The title “Zabiullah” refers to:", o: ["Hazrat Ishaq (A.S)","Hazrat Yaqub (A.S)","Hazrat Ismail (A.S)","Hazrat Musa (A.S)"], c: 2 },
+{ q: "194. The title “Zul-Noorain” was given to:", o: ["Hazrat Ali (R.A)","Hazrat Umar (R.A)","Hazrat Usman (R.A)","Hazrat Abu Bakr (R.A)"], c: 2 },
+{ q: "195. The title “Farooq-e-Azam” belongs to:", o: ["Hazrat Ali (R.A)","Hazrat Umar (R.A)","Hazrat Usman (R.A)","Hazrat Abu Bakr (R.A)"], c: 1 },
+{ q: "196. The title “Lion of Allah” was given to:", o: ["Hazrat Hamza (R.A)","Hazrat Khalid bin Waleed (R.A)","Hazrat Ali (R.A)","Hazrat Umar (R.A)"], c: 2 },
+{ q: "197. The title “Syed-us-Shuhada” belongs to:", o: ["Hazrat Ali (R.A)","Hazrat Umar (R.A)","Hazrat Hamza (R.A)","Hazrat Abu Bakr (R.A)"], c: 2 },
+{ q: "198. The title “Saifullah” was given to:", o: ["Hazrat Umar (R.A)","Hazrat Ali (R.A)","Hazrat Hamza (R.A)","Hazrat Khalid bin Waleed (R.A)"], c: 3 },
+
+{ q: "199. The Holy Prophet (PBUH) was born in:", o: ["570 A.D","571 A.D","572 A.D","573 A.D"], c: 1 },
+{ q: "200. The name of the Holy Prophet’s (PBUH) father was:", o: ["Hazrat Abu Talib","Hazrat Abdullah","Hazrat Abdul Muttalib","Hazrat Abbas"], c: 1 },
+
+  { q: "201. The name of the Holy Prophet’s (PBUH) mother was:", o: ["Hazrat Halima","Hazrat Khadija","Hazrat Amna","Hazrat Fatima"], c: 2 },
+  { q: "202. Zaid Bin Haris was the:", o: ["Cousin of the Holy Prophet (PBUH)","Uncle of the Holy Prophet (PBUH)","Adopted son of the Holy Prophet (PBUH)","Son-in-law of the Holy Prophet (PBUH)"], c: 2 },
+  { q: "203. The foster mother of the Holy Prophet (PBUH) was:", o: ["Hazrat Amna","Hazrat Khadija","Hazrat Halima","Hazrat Ayesha"], c: 2 },
+  { q: "204. The mother of the Holy Prophet (PBUH) died:", o: ["At his birth","After 2 years","After 4 years","After 6 years of his birth"], c: 3 },
+  { q: "205. The Holy Prophet (PBUH) married Hazrat Khadija at the age of:", o: ["20 years","23 years","25 years","30 years"], c: 2 },
+  { q: "206. The surname (Kunniyat) of the Holy Prophet (PBUH) was:", o: ["Abu Abdullah","Abu Talib","Abu-ul-Qasim","Abu Bakr"], c: 2 },
+  { q: "207. The Aqeeqa ceremony of the Holy Prophet (PBUH) was held after:", o: ["3 days","5 days","7 days","10 days"], c: 2 },
+  { q: "208. The Holy Prophet (PBUH) belonged to which clan of the Quraish tribe?", o: ["Banu Umayya","Banu Makhzoom","Banu Hashim","Banu Abd Shams"], c: 2 },
+  { q: "209. The Holy Prophet (PBUH) was buried in the:", o: ["Masjid-e-Nabvi","Jannat-ul-Baqi","Hujra of Hazrat Ayesha (R.A)","Cave of Hira"], c: 2 },
+  { q: "210. The Holy Prophet (PBUH) was born in the year of:", o: ["Hijrah","Battle of Badr","Elephant","Migration"], c: 2 },
+  { q: "211. The first child of the Holy Prophet (PBUH) was:", o: ["Abdullah","Ibrahim","Qasim","Fatima"], c: 2 },
+  { q: "212. The Holy Prophet (PBUH) received the first Wahi at the age of:", o: ["35 years","38 years","40 years","45 years"], c: 2 },
+  { q: "213. The Hajr-e-Aswad incident occurred when the Holy Prophet (PBUH) was:", o: ["25 years old","30 years old","35 years old","40 years old"], c: 2 },
+  { q: "214. In the first heaven, the Holy Prophet (PBUH) met:", o: ["Hazrat Isa (A.S)","Hazrat Musa (A.S)","Hazrat Adam (A.S)","Hazrat Ibrahim (A.S)"], c: 2 },
+  { q: "215. The name of the camel of the Holy Prophet (PBUH) was:", o: ["Al-Buraq","Al-Qaswa","Al-Kaswa","Al-Abraq"], c: 2 },
+  { q: "216. Bait-ul-Mamoor is located in:", o: ["First Heaven","Third Heaven","Fifth Heaven","Seventh Heaven"], c: 3 },
+  { q: "217. The Cave of Hira is located in:", o: ["Jabal-e-Thor","Jabal-e-Rehmat","Jabal-e-Noor","Mount Uhud"], c: 2 },
+  { q: "218. The Cave of Hira is about how far from Makkah?", o: ["1 mile","2 miles","3 miles","5 miles"], c: 2 },
+  { q: "219. The distance between Makkah and Madinah is approximately:", o: ["300 km","320 km","338 km","360 km"], c: 2 },
+  { q: "220. Mount Uhud is situated about:", o: ["1 mile from Madinah","2 miles from Madinah","3 miles from Madinah","5 miles from Madinah"], c: 2 },
+  { q: "221. Moatta was situated in:", o: ["Yemen","Iraq","Palestine","Syria"], c: 3 },
+  { q: "222. Jannat-ul-Baqi is situated in:", o: ["Makkah","Taif","Madinah","Jerusalem"], c: 2 },
+  { q: "223. Jannat-ul-Mualla is situated in:", o: ["Madinah","Taif","Makkah","Jerusalem"], c: 2 },
+  { q: "224. The Islamic (Hijri) calendar started on:", o: ["1 Ramazan 1 AH","1 Rabi-ul-Awwal 1 AH","1 Muharram 1 AH","10 Muharram 1 AH"], c: 2 },
+  { q: "225. The seal (ring) of the Holy Prophet (PBUH) was made of:", o: ["Gold","Iron","Silver","Brass"], c: 2 },
+  { q: "226. Mount Uhud is located near:", o: ["Makkah","Taif","Madinah","Syria"], c: 2 },
+  { q: "227. Hazrat Abu Bakr’s (R.A) period of Caliphate was:", o: ["610–622","622–632","632–634","634–644"], c: 2 },
+  { q: "228. Hazrat Umar’s (R.A) period of Caliphate was:", o: ["632–634","634–644","644–656","656–661"], c: 1 },
+  { q: "229. Hazrat Usman’s (R.A) period of Caliphate was:", o: ["634–644","644–656","656–661","661–680"], c: 1 },
+  { q: "230. Hazrat Ali’s (R.A) period of Caliphate was:", o: ["644–656","650–660","656–661","661–670"], c: 2 },
+  { q: "231. Hazrat Usman (R.A) added additional Azan for:", o: ["Fajr","Zuhr","Jumu‘ah","Eid"], c: 2 },
+  { q: "232. Compilation and distribution of copies of the Holy Quran was done by:", o: ["Hazrat Abu Bakr (R.A)","Hazrat Umar (R.A)","Hazrat Usman (R.A)","Hazrat Ali (R.A)"], c: 2 },
+  { q: "233. Zakat on horses was levied by:", o: ["Hazrat Abu Bakr (R.A)","Hazrat Umar (R.A)","Hazrat Usman (R.A)","Hazrat Ali (R.A)"], c: 1 },
+  { q: "234. The Sahabi who accepted Islam without seeing the Prophet (PBUH) was:", o: ["Hazrat Salman Farsi (R.A)","Hazrat Suhaib Rumi (R.A)","Owais Qarni (R.A)","Hazrat Bilal (R.A)"], c: 2 },
+  { q: "235. The public consultative assembly (Majlis-e-Aam) was formed by:", o: ["Hazrat Abu Bakr (R.A)","Hazrat Umar (R.A)","Hazrat Usman (R.A)","Hazrat Ali (R.A)"], c: 1 },
+  { q: "236. The office of Qazi (Judge) was established by:", o: ["Hazrat Abu Bakr (R.A)","Hazrat Umar (R.A)","Hazrat Usman (R.A)","Hazrat Ali (R.A)"], c: 1 },
+  { q: "237. The Hijri calendar was introduced by:", o: ["Hazrat Abu Bakr (R.A)","Hazrat Umar (R.A)","Hazrat Usman (R.A)","Hazrat Ali (R.A)"], c: 1 },
+  { q: "238. The police department was established by:", o: ["Hazrat Abu Bakr (R.A)","Hazrat Umar (R.A)","Hazrat Usman (R.A)","Hazrat Ali (R.A)"], c: 1 },
+  { q: "239. Zakat on horses was officially enforced by:", o: ["Hazrat Abu Bakr (R.A)","Hazrat Umar (R.A)","Hazrat Usman (R.A)","Hazrat Ali (R.A)"], c: 1 },
+  { q: "240. Bait-ul-Mal was systemized during the Caliphate of:", o: ["Hazrat Abu Bakr (R.A)","Hazrat Umar (R.A)","Hazrat Usman (R.A)","Hazrat Ali (R.A)"], c: 1 },
+  { q: "241. Khalid bin Waleed (R.A) accepted Islam in:", o: ["5 AH","6 AH","7 AH","8 AH"], c: 2 },
+  { q: "242. Abu Sufyan accepted Islam at the time of:", o: ["Treaty of Hudaybiyyah","Conquest of Makkah","Battle of Badr","Battle of Uhud"], c: 1 },
+  { q: "243. Hazrat Muaz bin Jabal (R.A) was appointed governor of:", o: ["Taif","Bahrain","Yemen","Syria"], c: 2 },
+  { q: "244. The ruler of Abyssinia was:", o: ["Heraclius","Najashi","Kisra","Muqauqis"], c: 1 },
+  { q: "245. Hazrat Abu Bakr’s (R.A) title was:", o: ["Farooq","Saifullah","Siddiq","Ameen"], c: 2 },
+  { q: "246. The first written collection of Hadith is:", o: ["Sahih Bukhari","Sahih Muslim","Sunan Abu Dawood","Sahifa-e-Sadiqa"], c: 3 },
+  { q: "247. The Holy Prophet (PBUH) had how many daughters?", o: ["2","3","4","5"], c: 2 },
+  { q: "248. Muslims returned without fighting in the Ghazwa of:", o: ["Badr","Uhud","Tabuk","Khandaq"], c: 2 },
+  { q: "249. Hazrat Sarah was the mother of:", o: ["Hazrat Ismail (A.S)","Hazrat Ishaq (A.S)","Hazrat Yaqub (A.S)","Hazrat Yusuf (A.S)"], c: 1 },
+  { q: "250. The Holy Prophet (PBUH) was born in:", o: ["570 A.D","571 A.D","572 A.D","573 A.D"], c: 1 },
+  
+  { q: "251. “The character of the Prophet (PBUH) was the Quran” was said by:", o: ["Hazrat Hafsa (R.A)","Hazrat Fatima (R.A)","Hazrat Ayesha (R.A)","Hazrat Khadija (R.A)"], c: 2 },
+  { q: "252. Surah Maryam was recited before:", o: ["Heraclius","Kisra","Najashi","Muqauqis"], c: 2 },
+  { q: "253. Surah Al-Falaq and Surah An-Naas are called:", o: ["Mutashabihat","Muqatta‘at","Mu‘awwidhatain","Mufassalat"], c: 2 },
+  { q: "254. The number of Ghazwat mentioned in the Quran is:", o: ["10","12","15","27"], c: 1 },
+  { q: "255. The total number of Ghazwat fought by the Prophet (PBUH) is:", o: ["24","25","26","27"], c: 3 },
+  { q: "256. Umm-e-Kulsoom (R.A) was the:", o: ["Wife of Prophet (PBUH)","Aunt of Prophet (PBUH)","Daughter of Prophet (PBUH)","Sister of Prophet (PBUH)"], c: 2 },
+  { q: "257. The Holy Prophet (PBUH) lived in Madinah for:", o: ["8 years","9 years","10 years","11 years"], c: 2 },
+  { q: "258. The conquest of Makkah took place in:", o: ["6 AH","7 AH","8 AH","9 AH"], c: 2 },
+  { q: "259. The conquest of Makkah occurred on:", o: ["10 Ramazan","15 Ramazan","20 Ramazan","25 Ramazan"], c: 2 },
+  { q: "260. The conquest of Makkah occurred in the year:", o: ["628 AD","629 AD","630 AD","631 AD"], c: 2 },
+  { q: "261. Prophet (PBUH) suggested:", o: ["Sulah Hudaibiya","Ghazwa Badr","Battle of Uhud","Farewell Hajj"], c: 0 },
+  { q: "262. Surah Naml has:", o: ["One Bismillah","Two Bismillah","Three Bismillah","No Bismillah"], c: 0 },
+  { q: "263. Tribe of Hazrat Khadija (RA) was:", o: ["Banu Hashim","Banu Asad Quraish","Banu Umayyah","Banu Makhzum"], c: 1 },
+  { q: "264. Hazrat Yahya (AS) was the son of:", o: ["Hazrat Zakariya (AS)","Hazrat Ibrahim (AS)","Hazrat Musa (AS)","Hazrat Isa (AS)"], c: 0 },
+  { q: "265. Grandmother of Prophet (PBUH) was:", o: ["Fatima (Paternal) & Barrah (Maternal)","Amina & Khadija","Safiya & Umm Salama","Fatima & Ayesha"], c: 0 },
+  { q: "266. Prophet (PBUH) did not participate in which battle?", o: ["Badr","Uhud","Saria","Khandaq"], c: 2 },
+  { q: "267. “Brael” is the title of:", o: ["Hazrat Yusuf","Hazrat Yaqub","Hazrat Isa","Hazrat Musa"], c: 2 },
+  { q: "268. Ghazwa Tabook was fought against:", o: ["Persians","Romans","Byzantines","Egyptians"], c: 1 },
+  { q: "269. Father of Hazrat Usman (R.A) was:", o: ["Afan Ibne Abi Alsa","Abu Talha","Abu Bakr","Abu Lahab"], c: 0 },
+  { q: "270. Daughters of Prophet (PBUH) were:", o: ["Fatima, Zainab, Ruqayyah, Umme Kulsoom","Fatima, Ayesha, Khadija, Maryam","Fatima, Zainab, Ayesha, Hafsa","Fatima, Ruqayyah, Hafsa, Maryam"], c: 0 },
+  { q: "271. Hazrat Ali (R.A) married on:", o: ["10 Ramadan 40 AH","15 Ramadan 40 AH","21 Ramadan 40 AH","25 Ramadan 40 AH"], c: 2 },
+  { q: "272. Hazrat Asma was the wife of:", o: ["Hazrat Ali (R.A)","Hazrat Zubair (R.A)","Hazrat Abu Bakr (R.A)","Hazrat Umar (R.A)"], c: 1 },
+  { q: "273. Tribes of Aus and Khazraj were settled in:", o: ["Medina","Yemen","Makkah","Syria"], c: 0 },
+  { q: "274. Title “Syed-ul-Ansari” belongs to:", o: ["Abu Ayub Ansari (R.A)","Abu Hurairah (R.A)","Hazrat Salman Farsi","Hazrat Bilal"], c: 0 },
+  { q: "275. Number of Farz in Tayammum:", o: ["2","3","4","5"], c: 1 },
+  { q: "276. Sulah Hudaibiya was scribed/written by:", o: ["Hazrat Ali (R.A)","Hazrat Abu Bakr (R.A)","Hazrat Umar (R.A)","Hazrat Usman (R.A)"], c: 0 },
+  { q: "277. Number of Quraish tribes:", o: ["8","9","10","11"], c: 1 },
+  { q: "278. Daughter of Usman (R.A) and wife of Prophet (PBUH) was:", o: ["Fatima","Zainab","Hafsa (R.A)","Ruqayyah"], c: 2 },
+  { q: "279. Cutting of hair during Hajj is called:", o: ["Ihram","Taqseer or Halq","Tawaf","Sayee"], c: 1 },
+  { q: "280. Last Wahi was revealed on:", o: ["10 Zul Hijjah 10 AH","12 Zul Hijjah 10 AH","15 Zul Hijjah 10 AH","18 Zul Hijjah 10 AH"], c: 2 },
+  { q: "281. First Hijrat-e-Absha took place in:", o: ["3rd Nabvi year","4th Nabvi year","5th Nabvi year","6th Nabvi year"], c: 0 },
+
+  { q: "282. First Hijrat-e-Absha took place in:", o: ["3rd Nabvi year","4th Nabvi year","5th Nabvi year","6th Nabvi year"], c: 0 },
+  { q: "283. Prophet (PBUH) had a camel at which battle?", o: ["Badr","Uhud","Infray Antar","Khandaq"], c: 0 },
+  { q: "284. Abu Amir al-Kahib did what?", o: ["Accepted Islam","Made Medina Detail","Wrote Quran","Led Badr"], c: 0 },
+  { q: "285. How many Huffaz were martyred in Jangitata?", o: ["50","60","70","80"], c: 2 },
+  { q: "286. Hazrat Yunus (AS) remained in the belly of:", o: ["Whale","Camel","Lion","Fish"], c: 0 },
+  { q: "287. How many Rukuns are in Namaz?", o: ["3","4","5","6"], c: 2 },
+  { q: "288. Quran was revealed over:", o: ["20 years 3 months 14 days","22 years 5 months 14 days","22 years 5 months 24 days","25 years 6 months 20 days"], c: 1 },
+  { q: "289. Quba Mosque is in:", o: ["Makkah","Medina","Jerusalem","Syria"], c: 1 },
+  { q: "290. Qibla was changed in which year AH?", o: ["1 AH","2 AH","3 AH","4 AH"], c: 2 },
+  { q: "291. Total Muslims martyred in Badr:", o: ["12","24","36","48"], c: 2 },
+  { q: "292. During Gharwa-e-Bars, Nazair (vows) were:", o: ["Allowed","Encouraged","Prohibited","Optional"], c: 2 },
+  { q: "293. Hazrat Ibrahim (AS) had how many children?", o: ["10","12","13","15"], c: 2 },
+  { q: "294. Old name of Makkah was:", o: ["Bakkah","Mecca","Ta’if","Jabal"], c: 0 },
+  { q: "295. Muzdalifa valley is called:", o: ["Mina","Masha-ar-ul-Haram","Arafat","Jamarat"], c: 2 },
+  { q: "296. Original name of Imam Bukhari was:", o: ["Abu Hanifa","Muhammad Bin Ismail","Malik Bin Anas","Ahmad Bin Hanbal"], c: 1 },
+  { q: "297. Qurbani is made during:", o: ["Ramadan","Hajj at Mina","Eid-ul-Fitr","Eid-ul-Adha"], c: 1 },
+  { q: "298. Kitab-ul-Assar was compiled by:", o: ["Imam Malik","Imam Abu Hanifa","Imam Shafi","Imam Ahmad"], c: 0 },
+  { q: "299. Hazrat Ismail’s (AS) mother’s name was:", o: ["Bibi Hajera","Sarah","Asiya","Khadija"], c: 0 },
+  { q: "300. Hazrat Shima (RA) was the:", o: ["Mother of Prophet (PBUH)","Foster sister of Prophet (PBUH)","Wife of Prophet (PBUH)","Daughter of Prophet (PBUH)"], c: 1 },
+  { q: "301. Hajj is not completed unless you go to:", o: ["Mina","Muzdalifa","Arafat","Jamarat"], c: 2 },
+  { q: "302. The first Mujadid was:", o: ["Hazrat Ali","Hazrat Umar Bin Abdul Aziz","Hazrat Abu Bakr","Hazrat Usman"], c: 1 },
+  { q: "303. Law of inheritance was revealed in:", o: ["2 AH","3 AH","4 AH","5 AH"], c: 2 },
+  { q: "304. The word “Muhammad (PBUH)” is mentioned in Quran:", o: ["2 times","3 times","4 times","5 times"], c: 2 },
+  { q: "305. Recitation of the first Kalima is called:", o: ["Tahteel","Shahada","Tashahhud","Takbeer"], c: 1 },
+  { q: "306. 9th Zil Hajj is called:", o: ["Eid-ul-Adha","Waquf-e-Arafat","Mina","Muzdalifa"], c: 1 },
+  { q: "307. Sahih Bukhari and Sahih Muslim are called:", o: ["Sunanain","Sahihain","Kutub Sittah","Tafsirain"], c: 1 },
+  { q: "308. Number of articles of Faith in Islam:", o: ["4","5","6","7"], c: 2 },
+  { q: "309. Qiyas means:", o: ["Prayer","Charity","Reasoning by analogy","Fasting"], c: 2 },
+  { q: "310. Sidrat-ul-Muntaha means:", o: ["First tree of Paradise","Last tree of Eternity","Tree in Mina","Tree of Knowledge"], c: 1 },
+  { q: "311. Jaabi is:", o: ["Person who prays","Person who fights","Person who collects Zakat","Person who teaches Quran"], c: 2 },
+  { q: "312. Greatest angel in Islam is:", o: ["Israfil (AS)","Jibraeel (AS)","Mikaeel (AS)","Azrael (AS)"], c: 1 },
+  { q: "313. Total number of wives of Prophet (PBUH) were:", o: ["10","11","12","13"], c: 2 },
+  { q: "314. Arkan-e-Islam are:", o: ["Kalma, Namaz, Roza, Zakat, Hajj","Kalma, Namaz, Zakat, Hajj, Jihad","Kalma, Roza, Hajj, Jihad, Charity","Kalma, Namaz, Roza, Hajj, Charity"], c: 0 },
+  { q: "315. Total Rukus in Quran:", o: ["556","557","558","559"], c: 2 },
+  { q: "316. Prophet (PBUH) was aged how many years when his mother died?", o: ["5","6","7","8"], c: 1 },
+  { q: "317. Sunan-e-Abu Dawood was written by:", o: ["Abu Hanifa","Abu Dawood Sijistani","Imam Bukhari","Imam Muslim"], c: 1 },
+  { q: "318. Prayer (Namaz) was enforced in which Prophet?", o: ["9th Prophet","10th Prophet","11th Prophet","12th Prophet"], c: 2 },
+  { q: "319. In Surah Shams, Allah swears on:", o: ["Sun","Moon","Night","Time"], c: 0 },
+  { q: "320. Palestine is called:", o: ["Land of Prophets","Holy Land","Land of Islam","Medina"], c: 1 },
+  { q: "321. Tayammum means:", o: ["Water ablution","Dry ablution","Bathing","Fasting"], c: 1 },
+  { q: "322. Real name of Imam Bukhari:", o: ["Abu Hanifa Muhammad","Abu Abdullah Muhammad Bin Ismail","Muhammad Bin Ahmad","Muhammad Bin Hanbal"], c: 1 },
+  { q: "323. Foster sister of Prophet (PBUH) was:", o: ["Sheema (RA)","Amina (RA)","Khadija (RA)","Fatima (RA)"], c: 0 },
+  { q: "324. Jabal-e-Noor is in:", o: ["Medina","Makkah","Ta’if","Arafat"], c: 1 },
+  { q: "325. Surah Rehman is called:", o: ["Heart of Quran","Uroos-ul-Quran","Mother of Quran","Light of Quran"], c: 1 },
+  { q: "326. Battle of Khyber was against:", o: ["Romans","Persians","Jews","Quraish"], c: 2 },
+  { q: "327. Angels helped in which battle?", o: ["Ghazwa-e-Uhud","Ghazwa-e-Badr","Ghazwa-e-Khyber","Ghazwa-e-Tabuk"], c: 2 },
+  { q: "328. First Muslims migrated towards:", o: ["Syria","Yemen","Abyssinia","Medina"], c: 2 },
+  { q: "329. Father of Hazrat Ibrahim (AS) was:", o: ["Azar","Abu Talib","Aazar","Haran"], c: 0 },
+  
+  { q: "330. Qiyas means:", o: ["Prayer","Charity","Reasoning by analogy","Fasting"], c: 2 },
+  { q: "331. Sidrat-ul-Muntaha means:", o: ["First tree of Paradise","Last tree of Eternity","Tree in Mina","Tree of Knowledge"], c: 1 },
+  { q: "332. Jaabi is:", o: ["Person who prays","Person who fights","Person who collects Zakat","Person who teaches Quran"], c: 2 },
+  { q: "333. Greatest angel in Islam is:", o: ["Israfil (AS)","Jibraeel (AS)","Mikaeel (AS)","Azrael (AS)"], c: 1 },
+  { q: "334. Total number of wives of Prophet (PBUH) were:", o: ["10","11","12","13"], c: 2 },
+  { q: "335. Arkan-e-Islam are:", o: ["Kalma, Namaz, Roza, Zakat, Hajj","Kalma, Namaz, Zakat, Hajj, Jihad","Kalma, Roza, Hajj, Jihad, Charity","Kalma, Namaz, Roza, Hajj, Charity"], c: 0 },
+  { q: "336. Total Rukus in Quran:", o: ["556","557","558","559"], c: 1 },
+  { q: "337. Prophet (PBUH) was aged how many years when his mother died?", o: ["5","6","7","8"], c: 2 },
+  { q: "338. Sunan-e-Abu Dawood was written by:", o: ["Abu Hanifa","Abu Dawood Sijistani","Imam Bukhari","Imam Muslim"], c: 1 },
+  { q: "339. Prayer (Namaz) was enforced in which Prophet?", o: ["9th Prophet","10th Prophet","11th Prophet","12th Prophet"], c: 2 },
+  { q: "340. In Surah Shams, Allah swears on:", o: ["Sun","Moon","Night","Time"], c: 0 },
+  { q: "341. Palestine is called:", o: ["Land of Prophets","Holy Land","Land of Islam","Medina"], c: 1 },
+  { q: "342. Tayammum means:", o: ["Water ablution","Dry ablution","Bathing","Fasting"], c: 1 },
+  { q: "343. Real name of Imam Bukhari:", o: ["Abu Hanifa Muhammad","Abu Abdullah Muhammad Bin Ismail","Muhammad Bin Ahmad","Muhammad Bin Hanbal"], c: 1 },
+  { q: "344. Foster sister of Prophet (PBUH) was:", o: ["Sheema (RA)","Amina (RA)","Khadija (RA)","Fatima (RA)"], c: 0 },
+  { q: "345. Jabal-e-Noor is in:", o: ["Medina","Makkah","Ta’if","Arafat"], c: 1 },
+  { q: "346. Surah Rehman is called:", o: ["Heart of Quran","Uroos-ul-Quran","Mother of Quran","Light of Quran"], c: 2 },
+  { q: "347. Battle of Khyber was against:", o: ["Romans","Persians","Jews","Quraish"], c: 2 },
+  { q: "348. Angels helped in which battle?", o: ["Ghazwa-e-Uhud","Ghazwa-e-Badr","Ghazwa-e-Khyber","Ghazwa-e-Tabuk"], c: 1 },
+  { q: "349. First Muslims migrated towards:", o: ["Syria","Yemen","Abyssinia","Medina"], c: 2 },
+  { q: "350. Father of Hazrat Ibrahim (AS) was:", o: ["Azar","Abu Talib","Aazar","Haran"], c: 0 },
+  
+  { q: "351. Kissing Hajr-e-Aswad is called:", o: ["Tawaf","Istilam","Sa’y","Halq"], c: 1 },
+  { q: "352. Strength of Muslims in Ghazwa-e-Tabuk:", o: ["10,000","15,000","20,000","30,000"], c: 2 },
+  { q: "353. Strength of Muslims in the conquest of Makkah:", o: ["5,000","10,000","15,000","20,000"], c: 1 },
+  { q: "354. Battle of Yarmook was fought against:", o: ["Romans","Persians","Quraish","Jews"], c: 0 },
+  { q: "355. How many Muslims were martyred in Battle of Yamama?", o: ["800","1000","1200","1500"], c: 2 },
+  { q: "356. Mother of Hazrat Abu Bakr (R.A) was:", o: ["Salma Binte Sahar","Amina","Khadija","Fatima"], c: 0 },
+  { q: "357. Who martyred Hazrat Ali (R.A)?", o: ["Ibn-e-Maljim","Abu Lahab","Abu Sufyan","Abu Talib"], c: 0 },
+  { q: "358. Father of Hazrat Ali (R.A) was:", o: ["Hazrat Abu Talib","Hazrat Abu Bakr","Hazrat Umar","Hazrat Hamza"], c: 0 },
+  { q: "359. Abu Turab was the title of:", o: ["Hazrat Ali","Hazrat Umar","Hazrat Hamza","Hazrat Abu Bakr"], c: 0 },
+  { q: "360. Strength of Muslims during migration from Makkah to Madina:", o: ["10,000","12,000","15,000","20,000"], c: 2 },
+  { q: "361. Literal meaning of Jannat is:", o: ["Paradise","Garden","Heaven","Blessings"], c: 1 },
+  { q: "362. Literal meaning of Wahi is:", o: ["Command","Message","Revelation","Guidance"], c: 2 },
+  { q: "363. Khuda literally means:", o: ["One with most power","Creator","Guide","Teacher"], c: 1 },
+  { q: "364. Shirk is the opposite of:", o: ["Faith","Tauheed","Salah","Zakat"], c: 1 },
+  { q: "365. Rooh-ul-Quds and Rooh-ul-Ameen is the title of:", o: ["Hazrat Israfil","Hazrat Mikael","Hazrat Jibraeel","Hazrat Azrael"], c: 2 },
+  { q: "366. From which mountain does Zam Zam water come out?", o: ["Safa-e-Marwa","Jabal Thawr","Jabal-e-Noor","Jabal Uhud"], c: 0 },
+  { q: "367. Hazrat Ali (R.A) was martyred in:", o: ["35 AH","40 AH","45 AH","50 AH"], c: 1 },
+  { q: "368. Interest (Riba) was declared Haram in:", o: ["5 AH","8 AH","10 AH","12 AH"], c: 2 },
+  { q: "369. Meezak-e-Madina was signed between:", o: ["Muslims and Romans","Muslims and Persians","Muslims and Jews","Muslims and Quraish"], c: 3 },
+  { q: "370. Number of pillars in Masjid Nabvi:", o: ["6","7","8","9"], c: 2 },
+  { q: "371. Largest mosque in the world is:", o: ["Masjid Nabvi","Masjid Quba","Masjid-al-Haram","Masjid Aqsa"], c: 2 },
+  { q: "372. First mosque on this earth was:", o: ["Masjid Quba","Bait-ul-Mukadas","Masjid-al-Haram","Masjid Nabvi"], c: 2 },
+  { q: "373. Direction of Qibla changed in:", o: ["1st Hijri","2nd Hijri","3rd Hijri","4th Hijri"], c: 2 },
+  { q: "374. Prophet (PBUH) age at the time of Hajr-e-Aswad incident:", o: ["30 years","32 years","35 years","40 years"], c: 2 },
+  { q: "375. Prophet (PBUH) participated in how many Ghazwats?", o: ["25","27","29","31"], c: 1 },
+  { q: "376. Number of Hadith collected by Hazrat Hurairah (RA) are:", o: ["5000","5374","5400","5500"], c: 1 },
+  { q: "377. Dome over the sacred grave of Prophet (PBUH) is called:", o: ["Gumbad-e-Khizra","Gumbad-e-Khizra-e-Sharif","Gumbad-e-Saadat","Gumbad-e-Nabvi"], c: 1 },
+  { q: "378. Baitul Mamoor is located on:", o: ["5th Heaven","6th Heaven","7th Heaven","8th Heaven"], c: 2 },
+  { q: "379. Lady who tried to poison Prophet (PBUH) was:", o: ["Hafsa","Zainab","Ayesha","Umm Salama"], c: 2 },
+  { q: "380. Second migration to Habshah took place in:", o: ["615 AD","616 AD","617 AD","618 AD"], c: 2 },
+  { q: "381. Hijra took place in which year of Nabvi?", o: ["10th","11th","12th","13th"], c: 2 },
+  { q: "382. King of Iran tore away the message of Prophet (PBUH):", o: ["Khosrow Parvez","Heraclius","Abu Sufyan","Yazdegerd"], c: 0 },
+  { q: "383. King of Byzantium in 7th Hijri was:", o: ["Khosrow","Heraclius","Caesar","Alexander"], c: 1 },
+  { q: "384. Prophet (PBUH) demised at age:", o: ["60","61","63","65"], c: 2 },
+  { q: "385. Friday is known as:", o: ["Sayeed-ul-Ayam","Yawm-ul-Jumah","Eid-ul-Jumah","Sayeed-ul-Khair"], c: 1 },
+  { q: "386. Ghar-e-Saur is mentioned in:", o: ["Surah Al-Baqara","Surah Al-Imran","Surah Al-Tauba","Surah Al-Maida"], c: 2 },
+  { q: "387. Number of Ayats in Surah Al-Baqara:", o: ["285","286","287","288"], c: 1 },
+  { q: "388. Number of angels mentioned in Quran:", o: ["4","5","6","7"], c: 2 },
+  { q: "389. Heaven on earth was made by:", o: ["Shadad","Nimrod","Pharaoh","Abu Lahab"], c: 0 },
+  { q: "390. Deen-e-Hanif is the old name of:", o: ["Christianity","Judaism","Islam","Zoroastrianism"], c: 3 },
+  { q: "391. Hadith is the:", o: ["Saying of Prophet (PBUH)","Command of Prophet (PBUH)","Quranic verse","Action of Prophet (PBUH)"], c: 0 },
+  { q: "392. The act of shortening one’s prayer while on journey is called:", o: ["Jam","Qasr","Iqamah","Tahajjud"], c: 1 },
+  { q: "393. First Caliph of Islam was:", o: ["Hazrat Umar","Hazrat Usman","Hazrat Ali","Hazrat Abu Bakr"], c: 3 },
+  { q: "394. Second Caliph of Islam was:", o: ["Hazrat Abu Bakr","Hazrat Umar","Hazrat Usman","Hazrat Ali"], c: 1 },
+  { q: "395. Third Caliph of Islam was:", o: ["Hazrat Umar","Hazrat Usman","Hazrat Ali","Hazrat Abu Bakr"], c: 1 },
+  { q: "396. Fourth Caliph of Islam was:", o: ["Hazrat Abu Bakr","Hazrat Umar","Hazrat Ali","Hazrat Usman"], c: 3 },
+  { q: "397. How many teeth of Prophet (PBUH) were broken in Uhud?", o: ["12","13","14","15"], c: 2 },
+  { q: "398. Religion of Habsha king was:", o: ["Islam","Christianity","Judaism","Zoroastrianism"], c: 1 },
+  { q: "399. Total Islamic months are:", o: ["10","11","12","13"], c: 2 },
+  { q: "400. Hazrat Hafsa (RA) was the daughter of:", o: ["Hazrat Abu Bakr","Hazrat Umar","Hazrat Usman","Hazrat Ali"], c: 0 },
+  { q: "401. Hazrat Abdul Mutalib’s relation with Prophet (PBUH) was:", o: ["Father","Grandfather","Uncle","Brother"], c: 1 },
+  { q: "402. Ammar bin Yasir recited the Quran in front of:", o: ["Heraclius","Najashi","Khosrow","Abu Sufyan"], c: 0 },
+  { q: "403. Khalid bin Walid was the brother of:", o: ["Ammarah ibn Walid","Abu Bakr","Umar","Talha"], c: 0 },
+  { q: "404. Abu Amir Al Rahib built:", o: ["Masjid Quba","Masjid-e-Zarrar","Masjid Nabvi","Masjid-al-Haram"], c: 1 },
+  { q: "405. Hazrat Jafar (RA) was martyred in:", o: ["Battle of Badr","Battle of Uhud","Battle of Muttah","Battle of Khandaq"], c: 2 },
+  { q: "406. The period of grief years (Aam-ul-Huzn) was:", o: ["8 years","9 years","10 years","12 years"], c: 2 },
+  { q: "407. A Muslim man is coffined in:", o: ["1 sheet","2 sheets","3 sheets","4 sheets"], c: 0 },
+  { q: "408. A Muslim woman is coffined in:", o: ["3 sheets","4 sheets","5 sheets","6 sheets"], c: 1 },
+  { q: "409. Hajj is not completed unless you go to:", o: ["Mina","Muzdalifa","Arafat","Jamarat"], c: 2 },
+  { q: "410. Hazrat Yunus (AS) lived in the belly of:", o: ["Whale","Fish","Lion","Camel"], c: 0 },
+  { q: "411. Hazrat Isa (AS) is:", o: ["Dead","Alive","Angel","Prophet only"], c: 1 }
+
+
+
+
+
+];
+
+
+
+
+
+
+  
+
+
+// ==========================
+// Quiz Logic
+// ==========================
+let answers=new Array(questions.length).fill(null);
+let attempted=0,index=0,time=7200,startTime=Date.now(),timerInt;
+
+function playSound(f,d){
+const a=new (window.AudioContext||window.webkitAudioContext)();
+const o=a.createOscillator();const g=a.createGain();
+o.connect(g);g.connect(a.destination);o.frequency.value=f;o.type='sine';g.gain.setValueAtTime(0.3,a.currentTime);o.start(a.currentTime);o.stop(a.currentTime+d);
+}
+
+function speakText(t){
+if('speechSynthesis'in window){let u=new SpeechSynthesisUtterance(t);u.lang='en-US';u.rate=.8;u.pitch=1;speechSynthesis.speak(u);}
+}
+
+function startCountdown(){
+if(!studentName.value||!rollNo.value){alert("Please fill in all fields!");return;}
+let c=5;countdown.innerText=c;
+let i=setInterval(()=>{c--;countdown.innerText=c;if(c===0){clearInterval(i);loginDiv.style.display="none";quizDiv.style.display="block";loadQ();startTimer()}},1000);
+}
+
+function loadQ(){
+attemptInfo.innerText=`Attempted: ${answers.filter(a=>a!==null).length}/${questions.length}`;
+progressFill.style.width=`${(answers.filter(a=>a!==null).length/questions.length)*100}%`;
+
+let q=questions[index];
+questionBox.innerHTML=`<h3>${index+1}. ${q.q}</h3>`;
+optionsBox.innerHTML="";
+q.o.forEach((op,i)=>{
+let d=document.createElement("div");
+d.className="option";
+d.innerText=op;
+if(answers[index]===i)d.classList.add("selected");
+d.onclick=()=>{
+if(answers[index]===null)attempted++;
+answers[index]=i;
+if(i===q.c){d.classList.add("correct");playSound(900,.2);}
+else{d.classList.add("wrong");playSound(500,.2);}
+nextBtn.disabled=false;
+};
+optionsBox.appendChild(d);
+});
+prevBtn.disabled=index===0;
+nextBtn.textContent=index===questions.length-1?"Finish":"Next";
+submitBtn.style.display=index===questions.length-1?"block":"none";
+}
+
+function nextQ(){if(index<questions.length-1)index++;nextBtn.disabled=true;loadQ();}
+function prevQ(){if(index>0)index--;nextBtn.disabled=answers[index]===null;loadQ();}
+function skipQ(){index=(index+1)%questions.length;nextBtn.disabled=true;loadQ();}
+
+function startTimer(){
+timerInt=setInterval(()=>{
+let m=Math.floor(time/60),s=time%60;
+timer.innerText=`Time Left: ${m}:${s<10?'0':''}${s}`;
+timerBarFill.style.width=`${(time/2400)*100}%`;
+if(time===1200){warn20.style.display="block";playSound(600,1);}
+if(time--<=0){clearInterval(timerInt);submitTest();}
+},1000);
+}
+
+function confirmSubmit(){if(confirm("Submit Test?"))submitTest();}
+
+function submitTest(){
+clearInterval(timerInt);
+quizDiv.style.display="none";resultDiv.style.display="block";
+let score=answers.filter((a,i)=>a===questions[i].c).length;
+let pct=Math.round(score/questions.length*100);
+let tTaken=Math.floor((Date.now()-startTime)/60000);
+if(pct>=50){resStatus.innerHTML='🎉 PASSED! 🎉';speakText("Congratulations! You passed the test. Great job!");}
+else{resStatus.innerHTML='❌ FAILED ❌';speakText("Sorry! You failed. Try again to improve!");}
+resScore.innerText=`${studentName.value} (${rollNo.value}) scored ${score}/${questions.length} (${pct}%)`;
+resTime.innerText=`Time Taken: ${tTaken} minutes`;
+}
+
+function showReview(){
+resultDiv.style.display="none";reviewDiv.style.display="block";
+reviewContent.innerHTML="";
+questions.forEach((q,i)=>{
+let div=document.createElement("div");div.className="review-question";
+let opts="";
+q.o.forEach((op,idx)=>{
+let cls="review-option";
+if(idx===q.c)cls+=" correct";
+else if(answers[i]===idx)cls+=" wrong";
+opts+=`<div class="${cls}">${op}</div>`;
+});
+div.innerHTML=`<h4>${i+1}. ${q.q}</h4>${opts}<div class="review-explanation"><b>Explanation:</b> ${q.exp}</div>`;
+reviewContent.appendChild(div);
+});
+}
+
+function backToResult(){reviewDiv.style.display="none";resultDiv.style.display="block";}
+function toggleDarkMode(){document.body.classList.toggle("dark-mode");}
+</script>
+</body>
+</html>
